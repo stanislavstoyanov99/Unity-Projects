@@ -763,7 +763,7 @@ GameObject:
   - component: {fileID: -2856238315297314512}
   m_Layer: 0
   m_Name: Animal_Stag_01
-  m_TagString: Untagged
+  m_TagString: Animal
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

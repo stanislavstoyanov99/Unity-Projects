@@ -11,7 +11,6 @@ public class SpawnManagerX : MonoBehaviour
     private float spawnPosY = 30;
 
     private float startDelay = 1.0f;
-    private float spawnInterval = 3.0f;
     private float randomSpawnMinInterval = 3.0f;
     private float randomSpawnMaxInterval = 5.0f;
 
