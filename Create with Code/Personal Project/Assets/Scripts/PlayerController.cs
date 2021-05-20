@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    private float speed = 10f;
+    private float speed = 100f;
     private float zTopBound = 6f;
     private float zBottomBound = -7.5f;
     private Rigidbody playerRb;
@@ -21,7 +21,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // Moves the player based on arrow key input
-    void MovePlayer()
+    private void MovePlayer()
     {
         var horizontalInput = Input.GetAxis("Horizontal");
         var verticalInput = Input.GetAxis("Vertical");
@@ -31,7 +31,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // Prevents the player from leaving the top of bottom of the screen
-    void ConstrainPlayerPosition()
+    private void ConstrainPlayerPosition()
     {
         if (transform.position.z < zBottomBound)
         {
@@ -41,6 +41,22 @@ public class PlayerController : MonoBehaviour
         if (transform.position.z > zTopBound)
         {
             transform.position = new Vector3(transform.position.x, transform.position.y, zTopBound);
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            Debug.Log("Player has collided with enemy.");
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Powerup"))
+        {
+            Destroy(other.gameObject);
         }
     }
 }
