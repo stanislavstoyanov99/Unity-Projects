@@ -3,7 +3,7 @@ using UnityEngine;
 
 public delegate void EnemyDestroyedHandler(int pointValue);
 
-public class EnemyController : MonoBehaviour
+public class EnemyController : MonoBehaviour, IEndGameObserver
 {
     #region Field Declarations
 
@@ -22,6 +22,7 @@ public class EnemyController : MonoBehaviour
     private WaitForSeconds angerDelay;
     private float shotSpeedxN;
     
+
     private Vector2 currentTarget;
     private SpriteRenderer spriteRenderer;
 
@@ -57,9 +58,13 @@ public class EnemyController : MonoBehaviour
     private void Move()
     {
         if (Vector2.Distance(transform.position, currentTarget) > 0.001f)
+        {
             transform.position = Vector2.MoveTowards(transform.position, currentTarget, Time.deltaTime * speed);
+        }
         else
+        {
             currentTarget = ScreenBounds.GetRandomPosition();
+        }
     }
 
     #endregion
@@ -69,7 +74,7 @@ public class EnemyController : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         Destroy(collision.gameObject);
-
+        
         GameObject xPlosion = Instantiate(explosion, transform.position, Quaternion.identity);
         xPlosion.transform.localScale = new Vector2(2, 2);
 
@@ -78,10 +83,18 @@ public class EnemyController : MonoBehaviour
             EnemyDestroyed(pointValue);
         }
 
-        Destroy(gameObject);
+        RemoveAndDestroy();
     }
 
     #endregion
+
+    private void RemoveAndDestroy()
+    {
+        GameSceneController gameSceneController = FindObjectOfType<GameSceneController>();
+        gameSceneController.RemoveObserver(this);
+
+        Destroy(gameObject);
+    }
 
     #region Projectile control
 
@@ -122,6 +135,11 @@ public class EnemyController : MonoBehaviour
         currentTarget = ScreenBounds.GetRandomPosition();
         shotDelay = new WaitForSeconds(shotdelayTime / 3);
         shotSpeed = shotSpeedxN;
+    }
+
+    public void Notify()
+    {
+        Destroy(gameObject);
     }
 
     #endregion

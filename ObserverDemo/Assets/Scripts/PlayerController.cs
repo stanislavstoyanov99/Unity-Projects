@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
+using System;
 
 public class PlayerController : MonoBehaviour
 {
@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
 
     private bool projectileEnabled = true;
     private WaitForSeconds shieldTimeOut;
+
     private GameSceneController gameSceneController;
 
     #endregion
@@ -27,8 +28,16 @@ public class PlayerController : MonoBehaviour
     {
         gameSceneController = FindObjectOfType<GameSceneController>();
         gameSceneController.ScoreUpdatedOnKill += GameSceneController_ScoreUpdatedOnKill;
+
+        EventBroker.ProjectileOutOfBounds += EnableProjectile;
+
         shieldTimeOut = new WaitForSeconds(shieldDuration);
         EnableShield();
+    }
+
+    private void OnDisable()
+    {
+        EventBroker.ProjectileOutOfBounds -= EnableProjectile;
     }
 
     private void GameSceneController_ScoreUpdatedOnKill(int pointValue)
@@ -36,7 +45,7 @@ public class PlayerController : MonoBehaviour
         EnableProjectile();
     }
 
-    #endregion
+    #endregion  
 
     #region Movement & Control
 
@@ -71,13 +80,13 @@ public class PlayerController : MonoBehaviour
 
     #region Projectile Management
 
-    public void EnableProjectile()
+    private void EnableProjectile()
     {
         projectileEnabled = true;
         availableBullet.SetActive(projectileEnabled);
     }
 
-    public void DisableProjectile()
+    private void DisableProjectile()
     {
         projectileEnabled = false;
         availableBullet.SetActive(projectileEnabled);
@@ -97,13 +106,10 @@ public class PlayerController : MonoBehaviour
             projectile.isPlayers = true;
             projectile.projectileSpeed = 4;
             projectile.projectileDirection = Vector2.up;
-
-            projectile.ProjectileOutOfBounds += EnableProjectile;
-
+       
             DisableProjectile();
         }
     }
-
     #endregion
 
     public event Action HitByEnemy;
@@ -123,6 +129,13 @@ public class PlayerController : MonoBehaviour
         GameObject xp = Instantiate(expolsion, transform.position, Quaternion.identity);
         xp.transform.localScale = new Vector2(2, 2);
 
+        if (HitByEnemy != null)
+        {
+            HitByEnemy();
+        }
+ 
+        gameSceneController.ScoreUpdatedOnKill -= GameSceneController_ScoreUpdatedOnKill;
+
         Destroy(gameObject);
     }
 
@@ -139,7 +152,7 @@ public class PlayerController : MonoBehaviour
     private IEnumerator DisableShield()
     {
         yield return shieldTimeOut;
-        shield.SetActive(false);
+        shield.SetActive(false);     
     }
 
     #endregion

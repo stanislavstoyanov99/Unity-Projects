@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 
 public class GameSceneController : MonoBehaviour
 {
     public event EnemyDestroyedHandler ScoreUpdatedOnKill;
-    public event Action<int> LiveLost;
+    public event Action<int> LifeLost;
 
     #region Field Declarations
 
@@ -35,7 +36,37 @@ public class GameSceneController : MonoBehaviour
 
     #endregion
 
+    #region Subject Implementation
+
+    private List<IEndGameObserver> endGameObservers;
+
+    public void AddObserver(IEndGameObserver observer)
+    {
+        endGameObservers.Add(observer);
+    }
+
+    public void RemoveObserver(IEndGameObserver observer)
+    {
+        endGameObservers.Remove(observer);
+    }
+
+    private void NotifyObservers()
+    {
+        foreach (IEndGameObserver observer in endGameObservers)
+        {
+            observer.Notify();
+        }
+    }
+
+
+    #endregion
+
     #region Startup
+
+    private void Awake()
+    {
+        endGameObservers = new List<IEndGameObserver>();
+    }
 
     void Start()
     {
@@ -54,7 +85,9 @@ public class GameSceneController : MonoBehaviour
         StartCoroutine(SpawnEnemies());
 
         if (currentLevel.hasPowerUps)
+        {
             StartCoroutine(SpawnPowerUp());
+        }
     }
 
     private void EndLevel()
@@ -84,6 +117,7 @@ public class GameSceneController : MonoBehaviour
         PlayerController ship = Instantiate(playerShip, new Vector2(0, -4.67f), Quaternion.identity);
         ship.speed = playerSpeed;
         ship.shieldDuration = shieldDuration;
+
         ship.HitByEnemy += Ship_HitByEnemy;
 
         yield return null;
@@ -93,14 +127,19 @@ public class GameSceneController : MonoBehaviour
     {
         lives--;
 
-        if (LiveLost != null)
+        if (LifeLost != null)
         {
-            LiveLost(lives);
+            LifeLost(lives);
         }
 
         if (lives > 0)
         {
             StartCoroutine(SpawnShip(true));
+        }
+        else
+        {
+            StopAllCoroutines();
+            NotifyObservers();
         }
     }
 
@@ -114,6 +153,9 @@ public class GameSceneController : MonoBehaviour
             Vector2 spawnPosition = ScreenBounds.RandomTopPosition();
 
             EnemyController enemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
+
+            AddObserver(enemy);
+
             enemy.gameObject.layer = LayerMask.NameToLayer("Enemy");
             enemy.shotSpeed = currentLevel.enemyShotSpeed;
             enemy.speed = currentLevel.enemySpeed;
@@ -121,6 +163,7 @@ public class GameSceneController : MonoBehaviour
             enemy.angerdelayTime = currentLevel.enemyAngerDelay;
 
             enemy.EnemyDestroyed += Enemy_EnemyDestroyed;
+ 
             yield return wait;
         }
     }
@@ -141,8 +184,12 @@ public class GameSceneController : MonoBehaviour
         {
             int index = UnityEngine.Random.Range(0, powerUpPrefabs.Length);
             Vector2 spawnPosition = ScreenBounds.RandomTopPosition();
-            Instantiate(powerUpPrefabs[index], spawnPosition, Quaternion.identity);
-            yield return new WaitForSeconds(UnityEngine.Random.Range(currentLevel.powerUpMinimumWait,currentLevel.powerUpMaximumWait));
+            PowerupController powerup = Instantiate(powerUpPrefabs[index], spawnPosition, Quaternion.identity);
+
+            AddObserver(powerup);
+
+            yield return new WaitForSeconds(
+                UnityEngine.Random.Range(currentLevel.powerUpMinimumWait, currentLevel.powerUpMaximumWait));
         }
     }
 

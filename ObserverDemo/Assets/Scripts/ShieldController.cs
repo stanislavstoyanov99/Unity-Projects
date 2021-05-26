@@ -13,5 +13,7 @@ public class ShieldController : MonoBehaviour
 
         GameObject newSpark = Instantiate(this.spark, sparkPos, Quaternion.identity);
         newSpark.transform.localScale = new Vector2(.5f, .5f);
+
     }
+    
 }
